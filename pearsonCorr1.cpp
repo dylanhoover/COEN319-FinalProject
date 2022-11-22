@@ -71,6 +71,8 @@ movie_t *movie_list[17770];
 int averageuserRatingInTest(int userId)
 {
     //calculate mean of all ratings for a user
+
+    //what we need here is to read in a test file 
     int sum = 0;
     int count = 0;
     for (int i = 0; i < 17770; i++)
@@ -93,7 +95,7 @@ int pearsonCorrelation(int userId, int kNeighbor)
     list<int> neightborList;
 
     int averageRatingInTest = averageuserRatingInTest(userId);
-    
+
     for (int i = 0; i < 17770; i++)
     {
         for (int j = 0; j < movie_list[i]->nreviews; j++)
