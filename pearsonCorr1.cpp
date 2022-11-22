@@ -68,6 +68,90 @@ typedef struct movie_t
 
 movie_t *movie_list[17770];
 
+int averageuserRatingInTest(int userId)
+{
+    //calculate mean of all ratings for a user
+    int sum = 0;
+    int count = 0;
+    for (int i = 0; i < 17770; i++)
+    {
+        for (int j = 0; j < movie_list[i]->nreviews; j++)
+        {
+            if (movie_list[i]->cus[j] == userId)
+            {
+                sum += movie_list[i]->rat[j];
+                count++;
+            }
+        }
+    }
+
+    return sum / count;
+}
+
+int pearsonCorrelation(int userId, int kNeighbor)
+{
+    list<int> neightborList;
+
+    int averageRatingInTest = averageuserRatingInTest(userId);
+    
+    for (int i = 0; i < 17770; i++)
+    {
+        for (int j = 0; j < movie_list[i]->nreviews; j++)
+        {
+            if (movie_list[i]->cus[j] != userId)
+            {
+                //calculate mean of all ratings for a user
+                int sum = 0;
+                int count = 0;
+                for (int i = 0; i < 17770; i++)
+                {
+                    for (int j = 0; j < movie_list[i]->nreviews; j++)
+                    {
+                        if (movie_list[i]->cus[j] == movie_list[i]->cus[j])
+                        {
+                            sum += movie_list[i]->rat[j];
+                            count++;
+                        }
+                    }
+                }
+
+                int averageRating = sum / count;
+
+                int numerator = 0;
+                int denominator1 = 0;
+                int denominator2 = 0;
+
+                for (int i = 0; i < 17770; i++)
+                {
+                    for (int j = 0; j < movie_list[i]->nreviews; j++)
+                    {
+                        if (movie_list[i]->cus[j] == movie_list[i]->cus[j])
+                        {
+                            numerator += (movie_list[i]->rat[j] - averageRating) * (movie_list[i]->rat[j] - averageRatingInTest);
+                            denominator1 += (movie_list[i]->rat[j] - averageRating) * (movie_list[i]->rat[j] - averageRating);
+                            denominator2 += (movie_list[i]->rat[j] - averageRatingInTest) * (movie_list[i]->rat[j] - averageRatingInTest);
+                        }
+                    }
+                }
+
+                float pearsonCorrelation = numerator / (sqrt(denominator1) * sqrt(denominator2));
+                neightborList.push_back(pearsonCorrelation);
+            }
+        }
+    }
+
+    neightborList.sort();
+
+    int kthNeighbor = 0;
+    for (int i = 0; i < kNeighbor; i++)
+    {
+        kthNeighbor = neightborList.back();
+        neightborList.pop_back();
+    }
+
+    return kthNeighbor;
+}
+
 int main(int argc, char *argv[])
 {
     FILE* fp = fopen("combined_data.txt", "r");
