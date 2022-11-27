@@ -80,13 +80,13 @@ typedef struct movie_t
 
 movie_t **movie_list = (movie_t **)malloc((sizeof(movie_t*) * 17770));
 
-int averageuserRatingInTest(int userId)
+float averageuserRatingInTest(int userId)
 {
     // calculate mean of all ratings for a user
 
     // what we need here is to read in a test file
-    int sum = 0;
-    int count = 0;
+    float sum = 0;
+    float count = 0;
     for (int i = 0; i < 17770; i++)
     {
         for (int j = 0; j < movie_list[i]->nreviews; j++)
@@ -102,7 +102,24 @@ int averageuserRatingInTest(int userId)
     return sum / count;
 }
 
-int pearsonCorrelation(int userId, int kNeighbor)
+//calculate average raiting for each movie in training matrix
+vector<int> averageRatingFromTraining()
+{
+    vector<int> result;
+    for (int i = 0; i < 17770; i++)
+    {
+        float sum = 0;
+        for (int j = 0; j < movie_list[i]->nreviews; j++)
+        {
+            sum += movie_list[i]->rat[j];
+        }
+        result.push_back(sum / movie_list[i]->nreviews);
+    }
+    return result;
+}
+
+
+list<int> pearsonCorrelation(int userId, int kNeighbor)
 {
     list<int> neightborList;
 
@@ -163,11 +180,51 @@ int pearsonCorrelation(int userId, int kNeighbor)
         neightborList.pop_back();
     }
 
-    return kthNeighbor;
+    return neightborList;
 }
+
+int cal_rating_pearson(int userId, int movieId, int kNeighbor)
+{
+    int rating = 0;
+
+    int averageRatingInTest = averageuserRatingInTest(userId);
+    vector<int> average_RatingFromTraining = averageRatingFromTraining();
+
+    //calculate pearson correlation
+    list<int> pearson_Correlation = pearsonCorrelation(userId, kNeighbor);
+
+    int kthNeighbor = 0;
+    for (int i = 0; i < kNeighbor; i++)
+    {
+        kthNeighbor = pearson_Correlation.back();
+        pearson_Correlation.pop_back();
+    }
+
+    //calculate rating
+    float numerator = 0;
+    float denominator = 0;
+    for (int i = 0; i < 17770; i++)
+    {
+        for (int j = 0; j < movie_list[i]->nreviews; j++)
+        {
+            if (movie_list[i]->cus[j] == movie_list[i]->cus[j])
+            {
+                numerator += (movie_list[i]->rat[j] - average_RatingFromTraining[i]) * kthNeighbor;
+                denominator += kthNeighbor;
+            }
+        }
+    }
+
+    rating = averageRatingInTest + (numerator / denominator);
+
+    return rating;
+}
+
 
 int main(int argc, char *argv[])
 {
+
+    int kNeighbor = 100;
     for (int i = 0; i < 17770; i++)
     {
         movie_list[i] = new movie_t();
@@ -245,6 +302,7 @@ int main(int argc, char *argv[])
     //     cout << movie_list[i]->info() << endl;
     // }
     // cout << movie_list[1857]->rat[0] << endl;
+    
     for (int i = 0; i < 17770; i++)
     {
         cout << movie_list[i]->info() << endl;
