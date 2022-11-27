@@ -50,7 +50,7 @@ typedef struct movie_t
         {
             throw std::runtime_error("Could not allocate dat array.");
         }
-        // cout << "movie " << id << " reserved" << endl;
+        cout << "movie " << id << " reserved" << endl;
         this->movieid = id;
         this->nreviews = nr;
         this->mean = mean;
@@ -302,10 +302,12 @@ int main(int argc, char *argv[])
     //     cout << movie_list[i]->info() << endl;
     // }
     // cout << movie_list[1857]->rat[0] << endl;
-    
+
+    int rating_pearson = cal_rating_pearson(1, 1, kNeighbor);
+    cout << rating_pearson << endl;
     for (int i = 0; i < 17770; i++)
     {
-        cout << movie_list[i]->info() << endl;
+        // cout << movie_list[i]->info() << endl;
         free(movie_list[i]);
     }
     free(movie_list);

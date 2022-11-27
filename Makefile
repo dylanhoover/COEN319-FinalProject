@@ -1,9 +1,9 @@
 CC = g++
 
-default: pearsonCorr
+default: pearsonCorr4
 
-sparsematmult: pearsonCorr.cpp
-	${CC} -O0 -g -Wall -Wextra -Wno-unused-parameter -fopenmp -o $@ pearsonCorr.cpp
+sparsematmult: pearsonCorr4.cpp
+	${CC} -O0 -g -Wall -Wextra -Wno-unused-parameter -fopenmp -o $@ pearsonCorr4.cpp
 
 clean:
-	-rm -f pearsonCorr
+	-rm -f pearsonCorr4
