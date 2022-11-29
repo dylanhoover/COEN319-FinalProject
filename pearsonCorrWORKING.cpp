@@ -87,88 +87,90 @@ map<int, tuple<map<int, int>, int, int, float>> user_data;
 
 void populate_movie_list(const string fileName, const int user_cap)
 {
-    ifstream infile(fileName);
-    string line = "";
-    int movieid, nreviews = 0;
-    float sum = 0.0;
-    int i = 0;
-    vector<int> custids;
-    vector<int> ratings;
-    vector<string> dates;
-    while (getline(infile, line))
-    {
-        if (line[line.length() - 1] == ':')
-        {
-            // if (nreviews > 0)
-            // {
-            movie_list[i]->reserve(movieid, nreviews, float(sum / nreviews));
-            copy(custids.begin(), custids.end(), movie_list[i]->cus);
-            copy(ratings.begin(), ratings.end(), movie_list[i]->rat);
-            copy(dates.begin(), dates.end(), movie_list[i]->dat);
-            i++;
-            if (i == movieCount + 1)
+        ifstream infile(fileName);
+        string line = "";
+        int movieid, nreviews = 0;
+        float sum = 0.0;
+        int i = 0;
+        vector<int> custids;
+        vector<int> ratings;
+        vector<string> dates;
+
+            while (getline(infile, line))
             {
-                infile.close();
-                return;
-            }
-            // }
-            movieid = stoi(line.substr(0, line.length() - 1));
-            nreviews = 0;
-            sum = 0.0;
-            custids.erase(custids.begin(), custids.end());
-            ratings.erase(ratings.begin(), ratings.end());
-            dates.erase(dates.begin(), dates.end());
-        }
-        else if (nreviews < user_cap)
-        {
-            stringstream ss(line);
-            string token;
-            int j = 0;
-            while (getline(ss, token, ','))
-            {
-                if (j == 0)
-                {
-                    custids.push_back(stoi(token));
+
+                    if (line[line.length() - 1] == ':')
+                    {
+                        // if (nreviews > 0)
+                        // {
+                        movie_list[i]->reserve(movieid, nreviews, float(sum / nreviews));
+                        copy(custids.begin(), custids.end(), movie_list[i]->cus);
+                        copy(ratings.begin(), ratings.end(), movie_list[i]->rat);
+                        copy(dates.begin(), dates.end(), movie_list[i]->dat);
+                        i++;
+                        if (i == movieCount + 1)
+                        {
+                            infile.close();
+                            return;
+                        }
+                        // }
+                        movieid = stoi(line.substr(0, line.length() - 1));
+                        nreviews = 0;
+                        sum = 0.0;
+                        custids.erase(custids.begin(), custids.end());
+                        ratings.erase(ratings.begin(), ratings.end());
+                        dates.erase(dates.begin(), dates.end());
+                    }
+                    else if (nreviews < user_cap)
+                    {
+                        stringstream ss(line);
+                        string token;
+                        int j = 0;
+                        while (getline(ss, token, ','))
+                        {
+                            if (j == 0)
+                            {
+                                custids.push_back(stoi(token));
+                            }
+                            else if (j == 1)
+                            {
+                                ratings.push_back(stoi(token));
+                            }
+                            else
+                            {
+                                dates.push_back(token);
+                            }
+                            j++;
+                        }
+                        // if (nreviews < user_cap)
+                        // {
+                        sum += ratings.back();
+                        nreviews++;
+                        if (count(id_list.begin(), id_list.end(), custids.back()) == 0)
+                        {
+                            id_list.push_back(custids.back());
+                        }
+                        get<0>(user_data[custids.back()])[movieid] = ratings.back();
+                        get<1>(user_data[custids.back()]) += ratings.back();
+                        ++get<2>(user_data[custids.back()]);
+                        get<3>(user_data[custids.back()]) = float(get<1>(user_data[custids.back()])) / float(get<2>(user_data[custids.back()]));
+                        // }
+                        // else
+                        // {
+                        //     custids.pop_back();
+                        //     ratings.pop_back();
+                        //     dates.pop_back();
+                        // }
+                    }
+                    if (infile.peek() == EOF)
+                    {
+                        movie_list[i]->reserve(movieid, nreviews, float(sum / nreviews));
+                        copy(custids.begin(), custids.end(), movie_list[i]->cus);
+                        copy(ratings.begin(), ratings.end(), movie_list[i]->rat);
+                        copy(dates.begin(), dates.end(), movie_list[i]->dat);
+                    }
                 }
-                else if (j == 1)
-                {
-                    ratings.push_back(stoi(token));
-                }
-                else
-                {
-                    dates.push_back(token);
-                }
-                j++;
-            }
-            // if (nreviews < user_cap)
-            // {
-            sum += ratings.back();
-            nreviews++;
-            if (count(id_list.begin(), id_list.end(), custids.back()) == 0)
-            {
-                id_list.push_back(custids.back());
-            }
-            get<0>(user_data[custids.back()])[movieid] = ratings.back();
-            get<1>(user_data[custids.back()]) += ratings.back();
-            ++get<2>(user_data[custids.back()]);
-            get<3>(user_data[custids.back()]) = float(get<1>(user_data[custids.back()])) / float(get<2>(user_data[custids.back()]));
-            // }
-            // else
-            // {
-            //     custids.pop_back();
-            //     ratings.pop_back();
-            //     dates.pop_back();
-            // }
-        }
-        if (infile.peek() == EOF)
-        {
-            movie_list[i]->reserve(movieid, nreviews, float(sum / nreviews));
-            copy(custids.begin(), custids.end(), movie_list[i]->cus);
-            copy(ratings.begin(), ratings.end(), movie_list[i]->rat);
-            copy(dates.begin(), dates.end(), movie_list[i]->dat);
-        }
-    }
-    infile.close();
+        infile.close();
 }
 
 // void populate_user_data()
@@ -198,6 +200,7 @@ float inverse_user_frequency(const int movie_id)
 {
     float iuf = 1.0;
     int m = 0;
+    #pragma omp parallel for schedule(static)
     for (int i = 0; i < userCount; i++)
     {
         int temp_user_id = id_list[i];
@@ -215,14 +218,18 @@ float inverse_user_frequency(const int movie_id)
 
 void pciuf(const int user_id, const int k_neighbor, vector<tuple<int, float>> &neighbor_list)
 {
+    #pragma omp parallel
+    {
     float user_avg_rat = get<3>(user_data[user_id]);
+    #pragma omp for schedule(dynamic)
     for (int i = 0; i < userCount; i++)
     {
-        int temp_user_id = id_list[i], common_movie = 0, iuf_mv_id = 0;
+        int temp_user_id = id_list[i];
+        int common_movie = 0, iuf_mv_id = 0;
         float num = 0.0, d1 = 0.0, d2 = 0.0, dTotal = 0.0;
-        for (int i = 0; i < movieCount; ++i)
+        for (int j = 0; j < movieCount; ++j)
         {
-            iuf_mv_id = movie_list[i]->movieid;
+            iuf_mv_id = movie_list[j]->movieid;
             int user_rat = 0, temp_user_rat = 0;
             if (get<0>(user_data[user_id]).count(iuf_mv_id))
             {
@@ -258,15 +265,21 @@ void pciuf(const int user_id, const int k_neighbor, vector<tuple<int, float>> &n
             neighbor_list.push_back(temp_tuple);
         }
     }
+    }
+    #pragma omp barrier
+    #pragma omp single
+    {
     sort(neighbor_list.begin(), neighbor_list.end());
     if (neighbor_list.size() > k_neighbor)
     {
         neighbor_list.resize(k_neighbor);
     }
+    }
 }
 
 float calc_pciuf(const int user_id, const int movie_id, const int k_neighbor)
 {
+    
     vector<tuple<int, float>> similarity_list;
     similarity_list.erase(similarity_list.begin(), similarity_list.end());
     pciuf(user_id, k_neighbor, similarity_list);
@@ -275,24 +288,28 @@ float calc_pciuf(const int user_id, const int movie_id, const int k_neighbor)
     float movie_avg_rat = movie_list[movie_id]->mean;
     float num = 0.0, den = 0.0;
 
+    #pragma omp parallel for schedule(dynamic) reduction(+:num, den)
     for (int i = 0; i < similarity_list.size(); ++i)
     {
         int temp_user_id = get<0>(similarity_list[i]);
         int temp_user_sim = get<1>(similarity_list[i]);
         float temp_user_avg_rat = get<3>(user_data[temp_user_id]);
         int temp_user_rat = 0;
-        if (get<0>(user_data[temp_user_id]).count(movie_id))
+        #pragma omp task shared(temp_user_rat)
         {
-            temp_user_rat = get<0>(user_data[temp_user_id])[movie_id];
-        }
-        if (temp_user_rat > 0)
-        {
-            float weight = temp_user_rat - movie_avg_rat;
-            num += weight * temp_user_sim;
-            den += fabs(temp_user_sim);
+            if (get<0>(user_data[temp_user_id]).count(movie_id))
+            {
+                temp_user_rat = get<0>(user_data[temp_user_id])[movie_id];
+            }
+            if (temp_user_rat > 0)
+            {
+                float weight = temp_user_rat - movie_avg_rat;
+                num += weight * temp_user_sim;
+                den += fabs(temp_user_sim);
+            }
         }
     }
-
+    #pragma omp barrier
     float result;
     if (den != 0)
     {
@@ -307,6 +324,7 @@ float calc_pciuf(const int user_id, const int movie_id, const int k_neighbor)
         result = user_avg_rat;
     }
     return result;
+    
 
     // int resultFinal = (int)(result + 0.5);
     // if (resultFinal > 5)
@@ -323,17 +341,18 @@ float calc_pciuf(const int user_id, const int movie_id, const int k_neighbor)
 int main(int argc, char *argv[])
 {
     movieMax = 17770;
-    movieCount = 500;
+    movieCount = 100;
     userCount = 0;
     int userCap = 1000;
     movie_list = (movie_t **)malloc((sizeof(movie_t *) * movieMax));
+    omp_set_num_threads(10);
     string file_name = "combined_data_1.txt";
 
     for (int i = 0; i < movieMax; i++)
     {
         movie_list[i] = new movie_t();
     }
-
+    //do we need to pass each movie data text to a different thread to parallelize that way
     populate_movie_list(file_name, userCap);
     cout << "Movie list populated" << endl;
     cout << endl;
