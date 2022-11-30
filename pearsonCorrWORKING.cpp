@@ -229,13 +229,13 @@ float inverse_user_frequency(const int movie_id)
 void pciuf(const int user_id, const int k_neighbor, vector<tuple<int, float>> &neighbor_list)
 {
     float user_avg_rat = get<3>(user_data[user_id]);
-    // #pragma omp parallel for //shared(movie_list, user_data, user_avg_rat)
+    #pragma omp parallel for shared(movie_list, user_data, user_avg_rat) schedule(dynamic)
     for (int i = 0; i < userCount; i++)
     {
         int temp_user_id = id_list[i];
         int user_rat = 0, temp_user_rat = 0, common_movie = 0, movie_id = 0;
         float num = 0.0, d1 = 0.0, d2 = 0.0, dTotal = 0.0;
-        // #pragma omp parallel for shared(movie_list, user_data, user_avg_rat, num, d1, d2, common_movie, temp_user_id) firstprivate(movie_id, user_rat, temp_user_rat)
+        #pragma omp parallel for shared(movie_list, user_data, user_avg_rat, num, d1, d2, common_movie, temp_user_id) firstprivate(movie_id, user_rat, temp_user_rat) schedule(dynamic)
         for (int j = 0; j < movieCount; ++j)
         {
             movie_id = movie_list[j]->movieid;
@@ -269,7 +269,7 @@ void pciuf(const int user_id, const int k_neighbor, vector<tuple<int, float>> &n
             float similarity = num / dTotal;
             similarity *= (common_movie / (common_movie + 2));
             similarity *= pow(fabs(similarity), 1.5);
-            similarity *= inverse_user_frequency(movie_id);
+            // similarity *= inverse_user_frequency(movie_id);
             neighbor_list.push_back(make_tuple(temp_user_id, similarity));
         }
     }
@@ -326,11 +326,11 @@ float calc_pciuf(const int user_id, const int movie_id, const int k_neighbor)
 int main(int argc, char *argv[])
 {
     movieMax = 17770;
-    movieCount = 250;
+    movieCount = 300;
     userCount = 0;
     int userCap = 1000;
     movie_list = (movie_t **)malloc((sizeof(movie_t *) * movieCount));
-    string file_name = "combined_data_ordered.txt";
+    string file_name = "combined_data_1.txt";
     for (int i = 0; i < movieCount; i++)
     {
         movie_list[i] = new movie_t();
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 
     int threads[8] = {1, 2, 4, 8, 12, 16, 24, 32};
     // omp_set_num_threads(1);
-    for (int i = 7; i >= 0; --i)
+    for (int i = 4; i >= 0; --i)
     {
         omp_set_num_threads(threads[i]);
         int movie_id = 30;
